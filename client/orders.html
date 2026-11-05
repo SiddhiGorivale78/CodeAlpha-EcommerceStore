@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My Orders | ShopEasy</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<nav id="nav"></nav>
+<div class="container"><h1>My Orders</h1><div id="list">Loading...</div></div>
+<script src="js/app.js"></script>
+<script>
+(async () => {
+  if (!getUser()) { location.href = 'login.html'; return; }
+  const list = $('#list');
+  try {
+    const orders = await api('/orders/my');
+    list.innerHTML = orders.length ? orders.map((o) => `
+      <div class="box">
+        <div class="row" style="border:0">
+          <strong>Order #${o._id.slice(-6).toUpperCase()}</strong>
+          <span class="status">${esc(o.status)}</span>
+          <span class="muted">${new Date(o.createdAt).toLocaleString()}</span>
+        </div>
+        ${o.items.map((i) => `<div class="row"><span>${esc(i.name)} × ${i.qty}</span><span>₹${i.price * i.qty}</span></div>`).join('')}
+        <p class="muted" style="margin-top:10px">Deliver to: ${esc(o.address)}</p>
+        <h3 style="margin-top:8px">Total: ₹${o.total}</h3>
+      </div>`).join('') : '<p>No orders yet.</p>';
+  } catch (e) { list.innerHTML = `<p class="error">${esc(e.message)}</p>`; }
+})();
+</script>
+</body></html>

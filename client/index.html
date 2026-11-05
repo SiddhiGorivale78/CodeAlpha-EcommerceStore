@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Home | ShopEasy</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<nav id="nav"></nav>
+<div class="container">
+  <h1>Our Products</h1>
+  <input class="search" id="search" placeholder="Search products...">
+  <div class="grid" id="grid"></div>
+</div>
+<script src="js/app.js"></script>
+<script>
+let timer;
+async function load(q = '') {
+  const grid = $('#grid');
+  try {
+    const products = await api('/products' + (q ? '?search=' + encodeURIComponent(q) : ''));
+    grid.innerHTML = products.length ? products.map((p) => `
+      <div class="card">
+        <a href="product.html?id=${p._id}"><img src="${esc(p.image)}" alt="${esc(p.name)}"></a>
+        <div class="body">
+          <a href="product.html?id=${p._id}"><strong>${esc(p.name)}</strong></a>
+          <span class="muted">${esc(p.category)}</span>
+          <span class="price">₹${p.price}</span>
+          <button class="btn" ${p.stock < 1 ? 'disabled' : ''} onclick='addToCart(${JSON.stringify({ _id: p._id, name: p.name, price: p.price, image: p.image }).replace(/'/g, "&#39;")})'>
+            ${p.stock < 1 ? 'Out of stock' : 'Add to Cart'}
+          </button>
+        </div>
+      </div>`).join('') : '<p>No products found.</p>';
+  } catch (e) { grid.innerHTML = `<p class="error">${esc(e.message)}</p>`; }
+}
+$('#search').addEventListener('input', (e) => { clearTimeout(timer); timer = setTimeout(() => load(e.target.value), 300); });
+load();
+</script>
+</body></html>

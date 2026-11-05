@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Product | ShopEasy</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<nav id="nav"></nav>
+<div class="container"><div class="box detail" id="detail">Loading...</div></div>
+<script src="js/app.js"></script>
+<script>
+(async () => {
+  const id = new URLSearchParams(location.search).get('id');
+  const box = $('#detail');
+  try {
+    const p = await api('/products/' + id);
+    box.innerHTML = `
+      <img src="${esc(p.image)}" alt="${esc(p.name)}">
+      <div>
+        <h1>${esc(p.name)}</h1>
+        <p class="muted">${esc(p.category)}</p>
+        <h2 class="price">₹${p.price}</h2>
+        <p style="margin:12px 0">${esc(p.description)}</p>
+        <p class="muted" style="margin-bottom:14px">${p.stock > 0 ? p.stock + ' in stock' : 'Out of stock'}</p>
+        <div class="qty" style="margin-bottom:14px">
+          <button onclick="chg(-1)">−</button><span id="q">1</span><button onclick="chg(1)">+</button>
+        </div>
+        <button class="btn" id="add" ${p.stock < 1 ? 'disabled' : ''}>Add to Cart</button>
+        <a class="btn light" href="cart.html" style="margin-left:8px;display:inline-block">Go to Cart</a>
+      </div>`;
+    window.chg = (d) => { const n = Math.min(p.stock, Math.max(1, +$('#q').textContent + d)); $('#q').textContent = n; };
+    $('#add').onclick = () => addToCart(p, +$('#q').textContent);
+  } catch (e) { box.innerHTML = `<p class="error">${esc(e.message)}</p>`; }
+})();
+</script>
+</body></html>

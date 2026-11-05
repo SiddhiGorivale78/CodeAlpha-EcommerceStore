@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cart | ShopEasy</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<nav id="nav"></nav>
+<div class="container">
+  <h1>Your Cart</h1>
+  <div class="box" id="items"></div>
+  <div class="box" id="checkout" style="display:none">
+    <h2>Total: ₹<span id="total">0</span></h2>
+    <textarea id="address" rows="3" placeholder="Delivery address"></textarea>
+    <div class="error" id="err"></div>
+    <button class="btn" id="place">Place Order</button>
+  </div>
+</div>
+<script src="js/app.js"></script>
+<script>
+function draw() {
+  const cart = getCart();
+  const box = $('#items');
+  if (!cart.length) { box.innerHTML = '<p>Your cart is empty. <a href="index.html" style="color:#2563eb">Shop now</a></p>'; $('#checkout').style.display = 'none'; return; }
+  $('#checkout').style.display = 'block';
+  box.innerHTML = cart.map((i, idx) => `
+    <div class="row">
+      <img src="${esc(i.image)}" alt="">
+      <div style="flex:1"><strong>${esc(i.name)}</strong><br><span class="price">₹${i.price}</span></div>
+      <div class="qty"><button onclick="upd(${idx},-1)">−</button><span>${i.qty}</span><button onclick="upd(${idx},1)">+</button></div>
+      <strong>₹${i.price * i.qty}</strong>
+      <button class="btn light" onclick="rm(${idx})">Remove</button>
+    </div>`).join('');
+  $('#total').textContent = cart.reduce((a, i) => a + i.price * i.qty, 0);
+}
+function upd(i, d) { const c = getCart(); c[i].qty += d; if (c[i].qty < 1) c.splice(i, 1); saveCart(c); draw(); }
+function rm(i) { const c = getCart(); c.splice(i, 1); saveCart(c); draw(); }
+
+$('#place').onclick = async () => {
+  $('#err').textContent = '';
+  if (!getUser()) { location.href = 'login.html?next=cart.html'; return; }
+  try {
+    await api('/orders', { method: 'POST', body: { items: getCart().map((i) => ({ id: i.id, qty: i.qty })), address: $('#address').value } });
+    saveCart([]);
+    alert('Order placed successfully! 🎉');
+    location.href = 'orders.html';
+  } catch (e) {
+    $('#err').textContent = e.message;
+    if (/login|token/i.test(e.message)) setTimeout(() => (location.href = 'login.html?next=cart.html'), 1200);
+  }
+};
+draw();
+</script>
+</body></html>
